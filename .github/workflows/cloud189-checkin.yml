@@ -1,0 +1,55 @@
+name: Cloud189 Checkin
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  checkin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Random delay up to 5 minutes
+        run: sleep $((RANDOM % 301))
+
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Restore token cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .token
+          key: cloud189-token-${{ github.repository }}
+          restore-keys: cloud189-token-${{ github.repository }}-
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run checkin
+        env:
+          CLOUD189_TOKEN_JSON: ${{ secrets.CLOUD189_TOKEN_JSON }}
+          SENDKEY: ${{ secrets.SENDKEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          WECOM_BOT_KEY: ${{ secrets.WECOM_BOT_KEY }}
+          WECOM_BOT_TELPHONE: ${{ secrets.WECOM_BOT_TELPHONE }}
+          WX_PUSHER_APP_TOKEN: ${{ secrets.WX_PUSHER_APP_TOKEN }}
+          WX_PUSHER_UID: ${{ secrets.WX_PUSHER_UID }}
+          PUSH_PLUS_TOKEN: ${{ secrets.PUSH_PLUS_TOKEN }}
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          BARK_SERVER: ${{ secrets.BARK_SERVER }}
+          SHOWDOC_KEY: ${{ secrets.SHOWDOC_KEY }}
+        run: npm start
+
+      - name: Save token cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .token
+          key: cloud189-token-${{ github.repository }}-${{ github.run_id }}
