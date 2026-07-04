@@ -30,6 +30,9 @@ const prepareTokenFile = (tokenFile) => {
   }
   fs.mkdirSync(tokenDir, { recursive: true });
   JSON.parse(tokenJson);
+  if (fs.existsSync(tokenFile)) {
+    return;
+  }
   fs.writeFileSync(tokenFile, tokenJson, { mode: 0o600 });
 };
 
