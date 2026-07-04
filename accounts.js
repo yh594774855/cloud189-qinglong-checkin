@@ -1,4 +1,8 @@
 function loadAccountsFromEnv() {
+    if (process.env.CLOUD189_TOKEN_JSON) {
+        return []
+    }
+
     let accounts = []
 
     // 读取旧版环境变量

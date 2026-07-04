@@ -118,16 +118,29 @@ ql repo https://github.com/yh594774855/cloud189-qinglong-checkin.git "ql_cloud18
 
 ### 配置账号
 
-进入青龙面板“环境变量”，二选一配置账号。
+进入青龙面板“环境变量”，可使用 token 或账号密码。推荐 token 方式。
 
-方式一：单变量多账号。
+方式一：扫码生成 token 后配置。
+
+```text
+CLOUD189_TOKEN_JSON=<扫码登录生成的 token JSON>
+```
+
+本地扫码并写入当前 GitHub 仓库 Secrets：
+
+```bash
+npm install
+node qr_login.js
+```
+
+方式二：单变量多账号。
 
 ```text
 变量名：TY_ACCOUNTS
 变量值：[{"userName":"<phone_1>","password":"<password_1>"},{"userName":"<phone_2>","password":"<password_2>"}]
 ```
 
-方式二：分变量账号。
+方式三：分变量账号。
 
 ```text
 TY_USERNAME_1=<phone_1>
@@ -155,6 +168,7 @@ task ql_cloud189_checkin.sh
 | 变量 | 说明 |
 |------|------|
 | `CLOUD189_TOKEN_DIR` | token 缓存目录，默认当前项目 `.token` |
+| `CLOUD189_TOKEN_JSON` | 扫码登录得到的 token JSON，优先级高于账号密码 |
 | `CLOUD189_VERBOSE` | 设置为 `1` 输出 SDK 调试日志 |
 | `CLOUD189_DISABLE_PUSH` | 设置为 `1` 禁用推送 |
 | `CLOUD189_KEEP_LOGS` | 设置为 `1` 保留 `.logs` 日志文件 |

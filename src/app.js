@@ -1,4 +1,5 @@
 require("dotenv").config();
+const fs = require("fs");
 const {
   CloudClient,
   FileTokenStore,
@@ -10,6 +11,7 @@ const { mask, delay, stableId } = require("./utils");
 const push = require("./push");
 const { log4js, cleanLogs, catLogs } = require("./logger");
 const tokenDir = process.env.CLOUD189_TOKEN_DIR || ".token";
+const tokenJson = process.env.CLOUD189_TOKEN_JSON;
 
 sdkLogger.configure({
   isDebugEnabled: process.env.CLOUD189_VERBOSE === "1",
@@ -20,6 +22,40 @@ const doUserTask = async (cloudClient, logger) => {
   const result = await cloudClient.userSign()
   const netdiskBonus = result.isSign? 0: result.netdiskBonus
   logger.info(`个人签到任务: 获得 ${netdiskBonus}M 空间`);
+};
+
+const prepareTokenFile = (tokenFile) => {
+  if (!tokenJson) {
+    return;
+  }
+  fs.mkdirSync(tokenDir, { recursive: true });
+  JSON.parse(tokenJson);
+  fs.writeFileSync(tokenFile, tokenJson, { mode: 0o600 });
+};
+
+const runWithToken = async (userSizeInfoMap) => {
+  const logger = log4js.getLogger("token-login");
+  logger.addContext("user", "token");
+  const before = Date.now();
+  const tokenFile = `${tokenDir}/cloud189.json`;
+  try {
+    prepareTokenFile(tokenFile);
+    logger.log("开始执行");
+    const cloudClient = new CloudClient({
+      token: new FileTokenStore(tokenFile),
+    });
+    const beforeUserSizeInfo = await cloudClient.getUserSizeInfo();
+    userSizeInfoMap.set("token", {
+      cloudClient,
+      userSizeInfo: beforeUserSizeInfo,
+      logger,
+    });
+    await doUserTask(cloudClient, logger);
+  } finally {
+    logger.log(
+      `执行完毕, 耗时 ${((Date.now() - before) / 1000).toFixed(2)} 秒`
+    );
+  }
 };
 
 const run = async (userName, password, userSizeInfoMap, logger) => {
@@ -63,6 +99,13 @@ async function main() {
   //  用于统计实际容量变化
   const userSizeInfoMap = new Map();
   const errors = [];
+  if (tokenJson) {
+    try {
+      await runWithToken(userSizeInfoMap);
+    } catch (error) {
+      errors.push({ userName: "token", error });
+    }
+  }
   for (let index = 0; index < accounts.length; index++) {
     const account = accounts[index];
     const { userName, password } = account;
